@@ -23,10 +23,13 @@ class DioCacheManager {
   late String? _baseUrl;
   late String _defaultRequestMethod;
 
+  ValidateResponse? _validateResponse;
+
   DioCacheManager(CacheConfig config) {
     _manager = CacheManager(config);
     _baseUrl = config.baseUrl;
     _defaultRequestMethod = config.defaultRequestMethod;
+    _validateResponse = config.validateResponse;
   }
 
   /// interceptor for http cache.
@@ -61,7 +64,13 @@ class DioCacheManager {
         response.statusCode != null &&
         response.statusCode! >= 200 &&
         response.statusCode! < 300) {
-      await _pushToCache(response);
+      bool success = true;
+      if (_validateResponse != null) {
+        success = _validateResponse!(response);
+      }
+      if (success) {
+        await _pushToCache(response);
+      }
     }
     return handler.next(response);
   }
